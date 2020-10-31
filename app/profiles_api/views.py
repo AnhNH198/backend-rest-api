@@ -4,6 +4,8 @@ from rest_framework import status
 from rest_framework import viewsets
 from rest_framework.authentication import TokenAuthentication
 from rest_framework import filters
+from rest_framework.authtoken.views import ObtainAuthToken
+from rest_framework.settings import api_settings
 
 from profiles_api import serializers
 from profiles_api import models
@@ -83,3 +85,39 @@ class UserProfileViewSet(viewsets.ModelViewSet):
     permission_classes = (permissions.UpdateOwnProfile,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name', 'email')
+
+
+class UserLoginApiView(ObtainAuthToken):
+    """Handle creating user authenication tokens"""
+    renderer_classes = api_settings.DEFAULT_RENDERER_CLASSES
+    """add renderer_classes for default ObtainAuthToken class"""
+
+
+class UserProfileFeedViewSet(viewsets.ModelViewSet):
+    '''Handle creating, reading, and updating profile feed items'''
+    # Use Token authentication to authenticate request to our endpoint
+    authentication_classes = (TokenAuthentication,)
+    # Set serializer class
+    serializer_class = serializers.UserProfileFeedSerial
+    # Set query
+    queryset = models.ProfileFeedItem.objects.all()
+
+    # Create perform_create function
+    def perfom_create(self, serializer):
+        # Set the user profile to the logged in user
+        '''The perform_create function is a handy feature of Django
+        rest_framework that allow you to override the behavior or customize the
+        behavior for creating objects through a model ViewSet so when a request
+        gets made to ViewSet, it get passed into serialized class and validated
+        and then these these serialized dots save function is called by default
+        If we need to customize the logic for creating an object then we can do
+        this by creating the perform_create funtion this perform_create funtion
+        get called everytime you do http POST to ViewSet'''
+        # Set user profile, save content of serializer to an object in Database
+        serializer.save(user_profile=self.request.user)
+        '''The request object get passed into all ViewSet every time a request
+        is made, it contain all of the details about the request being made to
+        the ViewSet because we have added authentication_classes = token
+        authenication If user authenticated then the request will have a user
+        associated to the authenticated user, if user not authenticated then
+        it's just said to an anonymous user account'''
