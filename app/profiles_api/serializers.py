@@ -8,6 +8,16 @@ class TestSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=10, required=True)
 
 
+class MaHoa(serializers.Serializer):
+    văn_Bản = serializers.CharField(required=True)
+    key = serializers.IntegerField(required=True)
+
+
+class GiaiMa(serializers.Serializer):
+    văn_Bản = serializers.CharField(required=True)
+    key = serializers.IntegerField(required=True)
+
+
 class UserProfileSerial(serializers.ModelSerializer):
     """Serializers an user profile object"""
 

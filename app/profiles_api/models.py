@@ -51,7 +51,7 @@ class UserProfile(AbstractBaseUser, PermissionsMixin):
 
 
 class ProfileFeedItem(models.Model):
-    '''Profile status update'''
+    """Profile status update"""
     user_profile = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE
@@ -63,7 +63,7 @@ class ProfileFeedItem(models.Model):
     created_on = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        '''Return the model as a string
+        """Return the model as a string
         Tell python what to do when we convert a model instance into a string
-        '''
+        """
         return self.status_text
