@@ -14,5 +14,7 @@ urlpatterns = [
     path('login/', views.UserLoginApiView.as_view()),
     path('mahoa/', views.MaHoaVanBan.as_view()),
     path('giaima/', views.GiaiMaVanBan.as_view()),
+    path('mahoarsa/', views.MaHoaRSA.as_view()),
+    path('giaimarsa/', views.GiaiMaRSA.as_view()),
     path('', include(router.urls))
 ]

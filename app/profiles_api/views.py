@@ -6,8 +6,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework import filters
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.settings import api_settings
-from django.utils.safestring import mark_safe
-import json
+import math
 
 from django.shortcuts import render
 
@@ -36,6 +35,90 @@ def GiaiMa (ciphertext, key):
         else:
             plaintext = plaintext+c
     return plaintext
+
+def prime_check(a):
+    if(a==2):
+        return True
+    elif((a<2) or ((a%2)==0)):
+        return False
+    elif(a>2):
+        for i in range(2,a):
+            if not(a%i):
+                return False
+    return True
+
+def egcd(e, r):
+    while (r != 0):
+        e, r = r, e % r
+    return e
+
+# Euclid's Algorithm
+def eugcd(e, r):
+    for i in range(1, r):
+        while (e != 0):
+            a, b = r // e, r % e
+            if (b != 0):
+                print("%d = %d*(%d) + %d" % (r, a, e, b))
+            r = e
+            e = b
+
+# Extended Euclidean Algorithm
+def eea(a, b):
+    if (a % b == 0):
+        return (b, 0, 1)
+    else:
+        gcd, s, t = eea(b, a % b)
+        s = s - ((a // b) * t)
+        print("%d = %d*(%d) + (%d)*(%d)" % (gcd, a, t, s, b))
+        return (gcd, t, s)
+
+# Multiplicative Inverse
+def mult_inv(e, r):
+    gcd, s, _ = eea(e, r)
+    if (gcd != 1):
+        return None
+    else:
+        if (s < 0):
+            print("s=%d. Since %d is less than 0, s = s(modr), i.e., s=%d." % (
+            s, s, s % r))
+        elif (s > 0):
+            print("s=%d." % (s))
+        return s % r
+
+def encrypt(pub_key,n_text):
+    e,n=pub_key
+    x=[]
+    m=0
+    for i in n_text:
+        if(i.isupper()):
+            m = ord(i)-65
+            c=(m**e)%n
+            x.append(c)
+        elif(i.islower()):
+            m= ord(i)-97
+            c=(m**e)%n
+            x.append(c)
+        elif(i.isspace()):
+            spc=400
+            x.append(400)
+    return x
+
+#Decryption
+'''DECRYPTION ALGORITHM'''
+def decrypt(d, n, c_text):
+    txt = c_text.split(',')
+    print(txt)
+    x = ''
+    m = 0
+    for i in txt:
+        if (i == '400'):
+            x += ' '
+        else:
+            m = (int(i) ** d) % n
+            m += 65
+            c = chr(m)
+            x += c
+    return x
 
 
 # Create your views here.
@@ -136,6 +219,83 @@ class GiaiMaVanBan(APIView):
             return Response(
                 serializer.errors,
                 status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class MaHoaRSA(APIView):
+    serializer_class = serializers.MaHoaRSA
+
+    def get(self, format=None):
+        ret_json = {
+            "Message": "Đặt giá trị cho p và q với điều kiện",
+            "Điều kiện": "p và q phải là 2 số nguyên tố"
+        }
+        return Response(
+            {
+                "Message": ret_json
+            }
+        )
+
+    def post (self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            plaintext = serializer.validated_data.get('văn_Bản')
+            p = serializer.validated_data.get('p_value')
+            q = serializer.validated_data.get('q_value')
+            check_p = prime_check(p)
+            check_q = prime_check(q)
+            if check_p==False or check_q==False:
+                return Response(
+                    {
+                        "Message": 'Yêu cầu nhập giá trị p và q hợp lệ'
+                    }
+                )
+            n = p*q
+            r = (p-1)*(q-1)
+            for i in range(1, 1000):
+                if (egcd(i, r) == 1):
+                    e = i
+            d = mult_inv(e, r)
+            public = (e, n)
+            private = (d, n)
+            enc_message = encrypt(public, plaintext)
+            return Response(
+                {
+                    "RSA Modulus(N) là": n,
+                    "Eulers Toitent(n) là:": r,
+                    "Giá trị của e là": e,
+                    "Giá trị của d là": d,
+                    "Public Key là": f' {public} ',
+                    "Private Key là": f' {private} ',
+                    "Văn bản sau khi mã hóa RSA": f'{enc_message}'
+                }
+            )
+
+
+class GiaiMaRSA(APIView):
+    serializer_class = serializers.GiaiMaRSA
+    def get(self, format=None):
+        ret_json = {
+            "Message": "Nhập D và N là hai giá trị của private key để giải mã",
+            "Status": 200
+        }
+        return Response(
+            {
+                "Message": ret_json
+            }
+        )
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        if serializer.is_valid():
+            plaintext = serializer.validated_data.get('văn_Bản')
+            d = serializer.validated_data.get('d')
+            n = serializer.validated_data.get('n')
+            dec_text = decrypt(d, n, plaintext)
+            return Response(
+                {
+                    f"Văn bản sau khi giải mã sử dụng private key {d, n}": dec_text
+                }
             )
 
 

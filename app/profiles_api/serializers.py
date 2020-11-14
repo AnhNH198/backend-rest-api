@@ -18,6 +18,18 @@ class GiaiMa(serializers.Serializer):
     key = serializers.IntegerField(required=True)
 
 
+class MaHoaRSA(serializers.Serializer):
+    văn_Bản = serializers.CharField(required=True)
+    p_value = serializers.IntegerField(required=True)
+    q_value = serializers.IntegerField(required=True)
+
+
+class GiaiMaRSA(serializers.Serializer):
+    d = serializers.IntegerField(required=True)
+    n = serializers.IntegerField(required=True)
+    văn_Bản = serializers.CharField(required=True)
+
+
 class UserProfileSerial(serializers.ModelSerializer):
     """Serializers an user profile object"""
 
